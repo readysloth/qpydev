@@ -1,0 +1,18 @@
+{
+  "init": {
+    "class_field_init": [
+      {
+        "dev_cast": "type",
+        "field": "value",
+        "field1": "value1"
+      },
+      {
+        "dev_cast": "different_type",
+        "field": "value",
+        "field1": "value1"
+      }
+    ]
+  },
+  "instance_init": "init_func",
+  "instance_finalize": "finalize_func"
+}
