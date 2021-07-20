@@ -1,5 +1,6 @@
 {
   "name" : "schema_device",
+  "python_version" : "3.7m",
   "class" : {
     "schema" : "class.json",
     "code" : "class.py"
