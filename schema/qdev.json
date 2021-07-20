@@ -3,11 +3,11 @@
   "class" : {
     "schema" : "class.json",
     "code" : "class.py"
-  }
+  },
   "device" : {
     "schema" : "device.json",
     "code" : "device.py"
-  }
+  },
   "properties" : {
     "schema" : "properties.json",
     "code" : "properties.py"
