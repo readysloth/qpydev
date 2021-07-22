@@ -4,6 +4,10 @@
 #include <Python.h>
 
 /*[[[cog
+    #
+    # generating device properties
+    #
+
     import json as j
     import main as m
 
@@ -23,8 +27,25 @@
 
         cog.outl(f"    DEFINE_PROP_{ptype}({pname}, {dev_name}, {pfield}{default_value}),")
     cog.outl("    DEFINE_PROP_END_OF_LIST()")
-    cog.outl("}")
+    cog.outl("};")
   ]]]*/
+/*[[[end]]]*/
 
 
+/*[[[cog
+    #
+    # generating device class
+    #
+
+    import json as j
+    import main as m
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    cog.outl("typedef struct {")
+    for fname, ftype in m.get_nested_schema(SCHEMA, 'device').items():
+        cog.outl(f"    {ftype} {fname};")
+    cog.outl(f"}} {m.get_device_class_name(SCHEMA)};")
+  ]]]*/
 /*[[[end]]]*/
