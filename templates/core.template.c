@@ -1,7 +1,24 @@
 #include "qemu/osdep.h"
 #include "qapi/error.h"
+#include "qom/object.h"
 
 #include <Python.h>
+
+/*[[[cog
+    #
+    # generating device type
+    #
+
+    import json as j
+    import main as m
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    cog.outl(f"OBJECT_DECLARE_SIMPLE_TYPE({m.get_device_class_name(SCHEMA)}, {SCHEMA['name'].upper()})")
+  ]]]*/
+/*[[[end]]]*/
+
 
 /*[[[cog
     #
