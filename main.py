@@ -33,3 +33,4 @@ if __name__ == '__main__':
 
     subp.run(['cog', '-d', '-o', SCHEMA["name"] + '.c', sys.argv[2]],
              env=ENV)
+    os.remove(DEV_SCHEMA_FILE)

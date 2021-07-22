@@ -3,6 +3,7 @@ import typing as t
 
 from pathlib import Path
 
+
 def load_schema(filename: str):
     schema_path = Path(filename)
 
