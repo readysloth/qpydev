@@ -15,6 +15,7 @@
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
+    cog.outl(f'#define TYPE_{SCHEMA["name"].upper()} "{SCHEMA["name"]}"')
     cog.outl(f"OBJECT_DECLARE_SIMPLE_TYPE({m.get_device_class_name(SCHEMA)}, {SCHEMA['name'].upper()})")
   ]]]*/
 /*[[[end]]]*/
@@ -95,28 +96,39 @@
     for entry in SCHEMA["class"]["schema"]["init"]["class_field_init"]:
         cog.outl()
         dev_cast = entry["dev_cast"]
-        cog.outl(f"    {dev_cast} *{dev_cast}_ptr = {dev_cast}(oc);")
+        cog.outl(f"    {dev_cast['type']} *{dev_cast['type']}_ptr = {dev_cast['cast']}(oc);")
 
         for k,v in entry.items():
             if k == "dev_cast":
                 continue
-            cog.outl(f"    {dev_cast}_ptr->{k} = {v};")
+            cog.outl(f"    {dev_cast['type']}_ptr->{k} = {v};")
+
+    cog.outl()
+    cog.outl(f'    Py_SetProgramName("{SCHEMA["name"]}");')
+    cog.outl(f'    Py_Initialize();')
     cog.outl("}")
     cog.outl()
     cog.outl()
 
     cog.outl(f"{instance_init_func_proto}{{")
 
-    instance_init_source = m.get_function_text_from(SCHEMA['class'],
-                                                    SCHEMA['class']['schema']['instance_init'])
+    init_func_name = SCHEMA["class"]["schema"]["instance_init"]
+    instance_init_source = m.get_function_text_from(SCHEMA["class"], init_func_name)
 
-    py_code_start = f"    char *py_code = "
+    py_code_start = f"    static char *py_code = "
 
     cog.out(py_code_start + f'"{instance_init_source[0]}"\n')
     for line in instance_init_source[1:-1]:
         cog.out(offset_text_by(py_code_start, f'"{line}"\n'))
     cog.out(offset_text_by(py_code_start, f'"{instance_init_source[-1]}";'))
     cog.outl()
+    cog.outl(f"    PyObject *p_compiled_code = Py_CompileString(py_code, NULL, 0);")
+    cog.outl(f'    PyObject *p_func = PyObject_GetAttrString(p_compiled_code, "{init_func_name}");')
+    cog.outl(f'    PyObject *p_func_args = PyTuple_New(1);')
+    cog.outl(f'    PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(Object));')
+    cog.outl(f'    PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);')
+    cog.outl(f'    PyObject_CallObject(p_func_args, p_func_args);')
+
 
     cog.outl("}")
   ]]]*/
@@ -149,3 +161,35 @@
     cog.outl("}")
   ]]]*/
 /*[[[end]]]*/
+
+
+
+/*[[[cog
+    #
+    # generating device type meta-info
+    #
+
+    import json as j
+    import main as m
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    cog.outl(f"static const TypeInfo {SCHEMA['name']}_info = {{")
+    cog.outl(f"    .name = TYPE_{SCHEMA['name'].upper()},")
+    cog.outl(f"    .parent = TYPE_{SCHEMA['device_type']}_DEVICE,")
+    cog.outl(f"    .class_init = {m.get_method_name(SCHEMA, 'class_init')},")
+    cog.outl(f"    .instance_init = {m.get_method_name(SCHEMA, 'instance_init')},")
+    cog.outl(f"    .instance_size = sizeof({m.get_device_class_name(SCHEMA)}),")
+    cog.outl("};")
+    cog.outl()
+    cog.outl(f"static void {SCHEMA['name']}_register_types(void)")
+    cog.outl("{")
+    cog.outl(f"    type_register_static(&{SCHEMA['name']}_info);")
+    cog.outl("}")
+    cog.outl()
+    cog.outl(f"type_init({SCHEMA['name']}_register_types)")
+
+  ]]]*/
+/*[[[end]]]*/
+
