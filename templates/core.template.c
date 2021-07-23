@@ -32,7 +32,7 @@
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
-    cog.outl(f"static Property {SCHEMA['name']}_properties[]{{")
+    cog.outl(f"static Property {SCHEMA['name']}_properties[] = {{")
     for p in m.get_nested_schema(SCHEMA, 'properties'):
         ptype = p["type"].upper()
         pname = f"\"{p['name']}\""
