@@ -1,0 +1,17 @@
+{
+  "name" : "example_device",
+  "python_version" : "3.7m",
+  "device_type" : "PCI",
+  "class" : {
+    "schema" : "class.json",
+    "code" : "class.py"
+  },
+  "device" : {
+    "schema" : "device.json",
+    "code" : "device.py"
+  },
+  "properties" : {
+    "schema" : "properties.json",
+    "code" : "properties.py"
+  }
+}

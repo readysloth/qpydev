@@ -1,0 +1,11 @@
+{
+  "init": {
+    "class_field_init": [
+      {
+        "dev_cast": "DEVICE_CLASS"
+      }
+    ]
+  },
+  "instance_init": "init_func",
+  "instance_finalize": "finalize_func"
+}

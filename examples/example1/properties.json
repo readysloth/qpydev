@@ -1,0 +1,15 @@
+{
+  "properties": [
+    {
+      "name": "example-int",
+      "type": "int32",
+      "field": "field",
+      "default_value": 0
+    },
+    {
+      "name": "example-string",
+      "type": "string",
+      "field": "field"
+    }
+  ]
+}

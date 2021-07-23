@@ -1,0 +1,6 @@
+{
+  "device": {
+    "dummy_field": "int",
+    "another_dummy_field": "float"
+  }
+}
