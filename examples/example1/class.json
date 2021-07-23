@@ -2,7 +2,10 @@
   "init": {
     "class_field_init": [
       {
-        "dev_cast": "DEVICE_CLASS"
+        "dev_cast": {
+          "type" : "DeviceClass",
+          "cast" : "DEVICE_CLASS"
+        }
       }
     ]
   },

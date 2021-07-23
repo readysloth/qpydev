@@ -2,12 +2,18 @@
   "init": {
     "class_field_init": [
       {
-        "dev_cast": "type",
+        "dev_cast": {
+          "type" : "DeviceClass",
+          "cast" : "DEVICE_CLASS"
+        },
         "field": "value",
         "field1": "value1"
       },
       {
-        "dev_cast": "different_type",
+        "dev_cast": {
+          "type" : "SomeOtherClass",
+          "cast" : "SOME_OTHER_CLASS"
+        },
         "field": "value",
         "field1": "value1"
       }
