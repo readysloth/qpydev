@@ -29,12 +29,17 @@ def get_python_prologue(schema: dict):
     return f'Py_SetProgramName("{schema["name"]}");'
 
 
+def get_method_name(schema: dict,
+                    method_name: str):
+    return f"{schema['name']}_{method_name}"
+
+
 def create_device_method_proto(schema: dict,
                                ret_type: str,
                                method_name: str,
                                args: str,
                                static=True):
-    method_proto = f"{ret_type} {schema['name']}_{method_name}({args})"
+    method_proto = f"{ret_type} {get_method_name(schema, method_name)}({args})"
     if static:
         return f"static {method_proto}"
     return method_proto
