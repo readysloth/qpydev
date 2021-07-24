@@ -14,8 +14,11 @@ def get_nested_schema(schema: dict, key: str):
     return schema[key]['schema'][key]
 
 
-def get_device_class_name(schema: dict):
-    return schema['name'].replace('_', ' ').title().replace(' ', '')
+def get_device_class_name(schema: dict, full=False):
+    base_class_name = schema["name"].replace('_', ' ').title().replace(' ', '')
+    if full:
+        return base_class_name + "Class"
+    return base_class_name
 
 
 def get_function_text_from(sub_schema: dict, method_name: str):

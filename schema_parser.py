@@ -27,6 +27,6 @@ def load_schema(filename: str):
             subschema_path = get_load_path(Path(init_schema[k]['schema']))
             subschema_code = get_load_path(Path(init_schema[k]['code']))
             load_into_schema(init_schema[k], 'schema', subschema_path)
-            load_into_schema(init_schema[k], 'code', subschema_code, as_json=False)
+            init_schema[k]['code'] = str(subschema_code)
 
     return init_schema

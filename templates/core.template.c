@@ -20,15 +20,18 @@
         SCHEMA = j.load(sf)
 
 
-    device_class  = m.get_device_class_name(SCHEMA)
-    device_parent = SCHEMA['device_type']
+    device_class    = m.get_device_class_name(SCHEMA, full=True)
+    device_instance = m.get_device_class_name(SCHEMA)
+    device_parent   = SCHEMA['device_type']
 
     cog.outl("typedef struct {")
     cog.outl(f"    {device_parent}Device parent_obj;")
+    cog.outl(f"}} {device_class};")
     cog.outl()
+    cog.outl("typedef struct {")
     for fname, ftype in m.get_nested_schema(SCHEMA, 'device').items():
         cog.outl(f"    {ftype} {fname};")
-    cog.outl(f"}} {device_class};")
+    cog.outl(f"}} {device_instance};")
   ]]]*/
 /*[[[end]]]*/
 
@@ -44,13 +47,13 @@
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
-    device_class  = m.get_device_class_name(SCHEMA)
-    device_name   = SCHEMA['name']
-    device_parent = SCHEMA['device_type']
-    device_qtype  = SCHEMA["name"].upper()
+    device_instance = m.get_device_class_name(SCHEMA)
+    device_name     = SCHEMA['name']
+    device_parent   = SCHEMA['device_type']
+    device_qtype    = SCHEMA["name"].upper()
 
     cog.outl(f'#define TYPE_{device_qtype} "{device_name}"')
-    cog.outl(f"OBJECT_DEFINE_TYPE({device_class}, {device_name}, {device_qtype}, {device_parent})")
+    cog.outl(f"OBJECT_DEFINE_TYPE({device_instance}, {device_name}, {device_qtype}, {device_parent}_DEVICE)")
   ]]]*/
 /*[[[end]]]*/
 
