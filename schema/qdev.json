@@ -2,6 +2,7 @@
   "name" : "schema_device",
   "python_version" : "3.7m",
   "device_type" : "PCI",
+  "device_header" : "hw/pci/pci.h",
   "class" : {
     "schema" : "class.json",
     "code" : "class.py"
