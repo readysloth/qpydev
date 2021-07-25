@@ -1,7 +1,17 @@
 #include "qemu/osdep.h"
 #include "qapi/error.h"
 #include "qom/object.h"
-#include "hw/pci/pci.h"
+/*[[[cog
+    import json as j
+    import main as m
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    device_header = SCHEMA["parent"]["header"]
+    cog.outl(f'#include "{device_header}"')
+   ]]]*/
+/*[[[end]]]*/
 #include "exec/address-spaces.h"
 #include "hw/qdev-properties-system.h"
 
@@ -20,18 +30,18 @@
         SCHEMA = j.load(sf)
 
 
-    device_class    = m.get_device_class_name(SCHEMA, full=True)
-    device_instance = m.get_device_class_name(SCHEMA)
-    device_parent   = SCHEMA['device_type']
+    device_class       = m.get_device_class_name(SCHEMA, full = True)
+    device_instance    = m.get_device_class_name(SCHEMA)
+    device_parent      = SCHEMA["parent"]["name"]
+
+    cog.outl(f"typedef struct {{}} {device_instance};")
 
     cog.outl("typedef struct {")
     cog.outl(f"    {device_parent}Device parent_obj;")
-    cog.outl(f"}} {device_class};")
     cog.outl()
-    cog.outl("typedef struct {")
     for fname, ftype in m.get_nested_schema(SCHEMA, 'device').items():
         cog.outl(f"    {ftype} {fname};")
-    cog.outl(f"}} {device_instance};")
+    cog.outl(f"}} {device_class};")
   ]]]*/
 /*[[[end]]]*/
 
@@ -47,13 +57,13 @@
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
-    device_instance = m.get_device_class_name(SCHEMA)
-    device_name     = SCHEMA['name']
-    device_parent   = SCHEMA['device_type']
-    device_qtype    = SCHEMA["name"].upper()
+    device_instance    = m.get_device_class_name(SCHEMA)
+    device_name        = SCHEMA["name"]
+    device_parent_type = SCHEMA["parent"]["type"]
+    device_qtype       = SCHEMA["name"].upper()
 
     cog.outl(f'#define TYPE_{device_qtype} "{device_name}"')
-    cog.outl(f"OBJECT_DEFINE_TYPE({device_instance}, {device_name}, {device_qtype}, {device_parent}_DEVICE)")
+    cog.outl(f"OBJECT_DEFINE_TYPE({device_instance}, {device_name}, {device_qtype}, {device_parent_type}_DEVICE)")
   ]]]*/
 /*[[[end]]]*/
 
@@ -104,10 +114,11 @@
         return len(initiator)*' ' + text
 
     device_name              = SCHEMA['name']
-    class_init_func_proto    = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
-    instance_init_func_proto = m.create_device_method_proto(SCHEMA, "void", "instance_init", "Object *obj")
+    class_init_proto    = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
+    instance_init_proto = m.create_device_method_proto(SCHEMA, "void", "init", "Object *obj")
+    instance_finalize_proto = m.create_device_method_proto(SCHEMA, "void", "finalize", "Object *obj")
 
-    cog.outl(f"{class_init_func_proto}{{")
+    cog.outl(f"{class_init_proto}{{")
 
     for entry in SCHEMA["class"]["schema"]["init"]["class_field_init"]:
         cog.outl()
@@ -129,7 +140,7 @@
     cog.outl()
     cog.outl()
 
-    cog.outl(f"{instance_init_func_proto}{{")
+    cog.outl(f"{instance_init_proto}{{")
 
     init_func_name = SCHEMA["class"]["schema"]["instance_init"]
     instance_init_source = m.get_function_text_from(SCHEMA["class"], init_func_name)
@@ -147,8 +158,9 @@
     cog.outl(f'    PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(Object));')
     cog.outl(f'    PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);')
     cog.outl(f'    PyObject_CallObject(p_func_args, p_func_args);')
+    cog.outl("}")
 
-
+    cog.outl(f"{instance_finalize_proto}{{")
     cog.outl("}")
   ]]]*/
 /*[[[end]]]*/
