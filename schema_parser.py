@@ -23,7 +23,9 @@ def load_schema(filename: str):
 
     with open(schema_path, 'r') as f:
         init_schema = json.load(f)
-        for k in filter(lambda k: type(init_schema[k]) == dict, init_schema):
+        for k in filter(lambda k: type(init_schema[k]) == dict and \
+                                  'schema' in init_schema[k] and \
+                                  'code' in init_schema[k], init_schema):
             subschema_path = get_load_path(Path(init_schema[k]['schema']))
             subschema_code = get_load_path(Path(init_schema[k]['code']))
             load_into_schema(init_schema[k], 'schema', subschema_path)

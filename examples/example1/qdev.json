@@ -1,7 +1,11 @@
 {
   "name" : "example_device",
   "python_version" : "3.7m",
-  "device_type" : "PCI",
+  "parent" : {
+    "name" : "SysBus",
+    "type" : "SYS_BUS",
+    "header" : "hw/sysbus.h"
+  },
   "class" : {
     "schema" : "class.json",
     "code" : "class.py"
