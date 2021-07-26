@@ -73,6 +73,7 @@ def get_python_c_api_wrap(schema: dict,
         p_ret = PyObject_CallObject(p_func, p_func_args);
         {check_code.format(what='p_ret')}
 
+        // for post creation code insert
         Py_XDECREF(p_module);
         Py_XDECREF(p_func);
         Py_XDECREF(p_func_args);
@@ -85,6 +86,7 @@ def get_python_c_api_wrap(schema: dict,
         Py_XDECREF(p_func_args);
         Py_XDECREF(p_ret);
         PyErr_Print();
+        // for post creation code insert
         abort();
     """)
 

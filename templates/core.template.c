@@ -104,6 +104,7 @@
     # generating device and instance methods
     #
 
+    import re
     import json as j
     import main as m
 
@@ -113,11 +114,13 @@
         SCHEMA = j.load(sf)
 
     device_name             = SCHEMA["name"]
+    class_methods           = SCHEMA["class"]["schema"]["methods"]
     class_init_proto        = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
-    instance_finalize_proto = m.create_device_method_proto(SCHEMA, "void", "finalize", "Object *obj")
 
     cog.outl(f"{class_init_proto};")
-    cog.outl(f"{instance_finalize_proto};")
+    for method in class_methods:
+        cog.outl(f'{m.create_device_method_proto(SCHEMA, method["c_ret"], method["c_name"], method["c_args"])};')
+    cog.outl()
     cog.outl()
 
 
@@ -136,8 +139,8 @@
                 continue
             cog.outl(f"    {cast_type}_ptr->{k} = {v};")
 
-    for f in ["reset", "realize", "unrealize"]:
-        cog.outl(f"    DeviceClass_ptr->{f} = {device_name + '_' + f};")
+    for f in filter(lambda m: m["c_name"] in ("reset", "realize", "unrealize"), class_methods):
+        cog.outl(f"    DeviceClass_ptr->{f['c_name']} = {device_name + '_' + f['c_name']};")
 
     cog.outl()
     cog.outl(f'    Py_SetProgramName("{device_name}");')
@@ -146,7 +149,7 @@
     cog.outl()
     cog.outl()
 
-    for method in SCHEMA["class"]["schema"]["methods"]:
+    for method in class_methods:
         method_proto = m.create_device_method_proto(SCHEMA, method["c_ret"], method["c_name"], method["c_args"])
         argc = method["c_args"].count(',') + 1
         arguments = method["c_args"].split(',')
@@ -174,28 +177,27 @@
 
             PyTuple_SetItem(p_func_args, {i}, p_{arg_val});"""
 
-        cog.outl(m.get_python_c_api_wrap(SCHEMA,
-                                         'class',
-                                         method["py_name"],
-                                         argc,
-                                         pass_args_to_python))
+        c_function_body = m.get_python_c_api_wrap(SCHEMA,
+                                                  'class',
+                                                  method["py_name"],
+                                                  argc,
+                                                  pass_args_to_python)
+        if method["c_name"] == "finalize":
+            c_function_body = re.sub("//.*\n",
+                                     "if(Py_FinalizeEx()){\n"
+                                     + ' '*8 + "PyErr_Print();\n"
+                                     + ' '*8 + "abort();\n"
+                                     + ' '*4 + "}\n",
+                                    c_function_body)
+        else:
+            c_function_body = re.sub("//.*\n", "", c_function_body)
+        cog.outl(c_function_body)
+
         cog.outl("}")
         cog.outl()
-
-    cog.outl(f"{instance_finalize_proto}{{")
-    cog.outl("    if(Py_FinalizeEx()){")
-    cog.outl("        PyErr_Print();")
-    cog.outl("        abort();")
-    cog.outl("    }")
-    cog.outl("}")
-    cog.outl()
-    cog.outl()
-
-
+        cog.outl()
   ]]]*/
 /*[[[end]]]*/
-
-
 /*[[[cog
     #
     # generating device methods
