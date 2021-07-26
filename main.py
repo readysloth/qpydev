@@ -44,22 +44,34 @@ def get_python_c_api_wrap(schema: dict,
         py_code += py_code_start*' ' + f'"{line}"\n'
     py_code += py_code_start*' ' + f'"{c_char_source[-1]}";'
 
+    check_code = """
+        if (!{what}){{
+            Py_XDECREF({what});
+            goto err;
+        }}"""
+
     return dedent(f"""
         {py_code}
-        PyObject *p_compiled_code     = Py_CompileString(py_code, "{func_name}.py", Py_single_input);
-        if (!p_compiled_code) goto err;
+        PyObject *p_compiled_code = NULL,
+                 *p_module = NULL,
+                 *p_func = NULL,
+                 *p_func_args = NULL,
+                 *p_ret = NULL;
 
-        PyObject *p_module            = PyImport_ExecCodeModule("{func_name}_module", p_compiled_code);
-        if (!p_module) goto err;
+        p_compiled_code = Py_CompileString(py_code, "{func_name}.py", Py_single_input);
+        {check_code.format(what='p_compiled_code')}
 
-        PyObject *p_func              = PyObject_GetAttrString(p_module, "{func_name}");
-        if (!p_func) goto err;
+        p_module = PyImport_ExecCodeModule("{func_name}_module", p_compiled_code);
+        {check_code.format(what='p_module')}
 
-        PyObject *p_func_args         = PyTuple_New({tuple_size});
-        if (!p_func_args) goto err;
+        p_func = PyObject_GetAttrString(p_module, "{func_name}");
+        {check_code.format(what='p_func')}
+
+        p_func_args = PyTuple_New({tuple_size});
+        {check_code.format(what='p_func_args')}
         {code_for_insert}
-        PyObject *p_ret = PyObject_CallObject(p_func, p_func_args);
-        if (!p_ret) goto err;
+        p_ret = PyObject_CallObject(p_func, p_func_args);
+        {check_code.format(what='p_ret')}
         return;
 
     err:

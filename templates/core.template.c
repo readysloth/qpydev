@@ -145,8 +145,7 @@
             PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(Object));
             if (!p_dev_obj_container) goto err;
 
-            PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);
-    """
+            PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);"""
     cog.outl(m.get_python_c_api_wrap(SCHEMA,
                                      'class',
                                      init_func_name,
