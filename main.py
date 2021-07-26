@@ -44,9 +44,7 @@ def get_python_c_api_wrap(schema: dict,
         py_code += py_code_start*' ' + f'"{line}"\n'
     py_code += py_code_start*' ' + f'"{c_char_source[-1]}";'
 
-    check_code = """
-        if (!{what}){{
-            Py_XDECREF({what});
+    check_code = """if (!{what}){{
             goto err;
         }}"""
 
@@ -74,9 +72,18 @@ def get_python_c_api_wrap(schema: dict,
         {code_for_insert}
         p_ret = PyObject_CallObject(p_func, p_func_args);
         {check_code.format(what='p_ret')}
+
+        Py_XDECREF(p_module);
+        Py_XDECREF(p_func);
+        Py_XDECREF(p_func_args);
+        Py_XDECREF(p_ret);
         return;
 
     err:
+        Py_XDECREF(p_module);
+        Py_XDECREF(p_func);
+        Py_XDECREF(p_func_args);
+        Py_XDECREF(p_ret);
         PyErr_Print();
         abort();
     """)
