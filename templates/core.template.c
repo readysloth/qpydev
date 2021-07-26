@@ -114,6 +114,18 @@
     class_init_proto        = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
     instance_init_proto     = m.create_device_method_proto(SCHEMA, "void", "init", "Object *obj")
     instance_finalize_proto = m.create_device_method_proto(SCHEMA, "void", "finalize", "Object *obj")
+    realize_proto           = m.create_device_method_proto(SCHEMA, "void", "realize", "DeviceState *dev, Error **errp")
+    unrealize_proto         = m.create_device_method_proto(SCHEMA, "void", "unrealize", "DeviceState *dev")
+    reset_proto             = m.create_device_method_proto(SCHEMA, "void", "reset", "DeviceState *dev")
+
+    cog.outl(f"{class_init_proto};")
+    cog.outl(f"{instance_init_proto};")
+    cog.outl(f"{instance_finalize_proto};")
+    cog.outl(f"{realize_proto};")
+    cog.outl(f"{unrealize_proto};")
+    cog.outl(f"{reset_proto};")
+    cog.outl()
+
 
     cog.outl(f"{class_init_proto}{{")
 
@@ -130,6 +142,9 @@
                 continue
             cog.outl(f"    {cast_type}_ptr->{k} = {v};")
 
+    for f in ["reset", "realize", "unrealize"]:
+        cog.outl(f"    DeviceClass_ptr->{f} = {device_name + '_' + f};")
+
     cog.outl()
     cog.outl(f'    Py_SetProgramName("{device_name}");')
     cog.outl(f'    Py_Initialize();')
@@ -140,9 +155,10 @@
     cog.outl(f"{instance_init_proto}{{")
 
     init_func_name = SCHEMA["class"]["schema"]["instance_init"]
+    device_qtype   = SCHEMA["name"].upper()
 
-    pass_obj_to_python = """
-            PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(Object));
+    pass_obj_to_python = f"""
+            PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(TYPE_{device_qtype}));
             if (!p_dev_obj_container) goto err;
 
             PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);"""
@@ -152,9 +168,23 @@
                                      1,
                                      pass_obj_to_python))
     cog.outl("}")
+    cog.outl()
 
     cog.outl(f"{instance_finalize_proto}{{")
+    cog.outl("    if(Py_FinalizeEx()){")
+    cog.outl("        PyErr_Print();")
+    cog.outl("        abort();")
+    cog.outl("    }")
     cog.outl("}")
+    cog.outl()
+    cog.outl()
+
+
+    cog.outl(f"{realize_proto}{{")
+    cog.outl("}")
+
+
+
   ]]]*/
 /*[[[end]]]*/
 
