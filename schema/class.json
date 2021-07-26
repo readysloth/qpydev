@@ -19,6 +19,20 @@
       }
     ]
   },
-  "instance_init": "init_func",
-  "instance_finalize": "finalize_func"
+  "methods" : [
+    {
+      "c_name" : "init",
+      "c_args" : "Object *obj",
+      "c_ret" : "void",
+      "c_to_py_cast" : "TYPE_SCHEMA_DEVICE",
+      "py_name" : "init_func"
+    },
+    {
+      "c_name" : "finalize",
+      "c_args" : "Object *obj",
+      "c_ret" : "void",
+      "c_to_py_cast" : "TYPE_SCHEMA_DEVICE",
+      "py_name" : "finalize_func"
+    }
+  ]
 }
