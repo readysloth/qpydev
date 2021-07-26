@@ -52,13 +52,15 @@ def get_python_c_api_wrap(schema: dict,
 
     return dedent(f"""
         {py_code}
-        PyObject *p_compiled_code = NULL,
-                 *p_module = NULL,
+        static PyObject *p_compiled_code = NULL;
+        PyObject *p_module = NULL,
                  *p_func = NULL,
                  *p_func_args = NULL,
                  *p_ret = NULL;
 
-        p_compiled_code = Py_CompileString(py_code, "{func_name}.py", Py_single_input);
+        if (!p_compiled_code){{
+            p_compiled_code = Py_CompileString(py_code, "{func_name}.py", Py_single_input);
+        }}
         {check_code.format(what='p_compiled_code')}
 
         p_module = PyImport_ExecCodeModule("{func_name}_module", p_compiled_code);
