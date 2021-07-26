@@ -101,29 +101,23 @@
 
 /*[[[cog
     #
-    # generating device and instance constructors and destructors
+    # generating device and instance methods
     #
 
     import json as j
     import main as m
+
+    from textwrap import dedent
 
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
     device_name             = SCHEMA["name"]
     class_init_proto        = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
-    instance_init_proto     = m.create_device_method_proto(SCHEMA, "void", "init", "Object *obj")
     instance_finalize_proto = m.create_device_method_proto(SCHEMA, "void", "finalize", "Object *obj")
-    realize_proto           = m.create_device_method_proto(SCHEMA, "void", "realize", "DeviceState *dev, Error **errp")
-    unrealize_proto         = m.create_device_method_proto(SCHEMA, "void", "unrealize", "DeviceState *dev")
-    reset_proto             = m.create_device_method_proto(SCHEMA, "void", "reset", "DeviceState *dev")
 
     cog.outl(f"{class_init_proto};")
-    cog.outl(f"{instance_init_proto};")
     cog.outl(f"{instance_finalize_proto};")
-    cog.outl(f"{realize_proto};")
-    cog.outl(f"{unrealize_proto};")
-    cog.outl(f"{reset_proto};")
     cog.outl()
 
 
@@ -152,23 +146,41 @@
     cog.outl()
     cog.outl()
 
-    cog.outl(f"{instance_init_proto}{{")
+    for method in SCHEMA["class"]["schema"]["methods"]:
+        method_proto = m.create_device_method_proto(SCHEMA, method["c_ret"], method["c_name"], method["c_args"])
+        argc = method["c_args"].count(',') + 1
+        arguments = method["c_args"].split(',')
+        casts = method["c_to_py_cast"].split(',')
 
-    init_func_name = SCHEMA["class"]["schema"]["instance_init"]
-    device_qtype   = SCHEMA["name"].upper()
+        argument_type_val = [arg.split() for arg in arguments]
+        arguments_and_cast = list(zip(argument_type_val, casts))
 
-    pass_obj_to_python = f"""
-            PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(TYPE_{device_qtype}));
-            if (!p_dev_obj_container) goto err;
+        if len(argument_type_val) != len(arguments_and_cast):
+            cog.error(f"{argument_type_val} and {casts} length mismatch!")
 
-            PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);"""
-    cog.outl(m.get_python_c_api_wrap(SCHEMA,
-                                     'class',
-                                     init_func_name,
-                                     1,
-                                     pass_obj_to_python))
-    cog.outl("}")
-    cog.outl()
+        cog.outl(f"{method_proto}{{")
+
+        pass_args_to_python = ''
+        for i, (arg, cast) in enumerate(arguments_and_cast):
+            is_pointer = '*' in arg[0] + arg[1]
+            if is_pointer:
+                arg_val = arg[1].replace('*', '')
+            else:
+                arg_val = '&' + arg[1]
+
+            pass_args_to_python += f"""
+            PyObject *p_{arg_val} = PyBytes_FromStringAndSize({arg_val}, sizeof({cast}));
+            if (!p_{arg_val}) goto err;
+
+            PyTuple_SetItem(p_func_args, {i}, p_{arg_val});"""
+
+        cog.outl(m.get_python_c_api_wrap(SCHEMA,
+                                         'class',
+                                         method["py_name"],
+                                         argc,
+                                         pass_args_to_python))
+        cog.outl("}")
+        cog.outl()
 
     cog.outl(f"{instance_finalize_proto}{{")
     cog.outl("    if(Py_FinalizeEx()){")
@@ -178,11 +190,6 @@
     cog.outl("}")
     cog.outl()
     cog.outl()
-
-
-    cog.outl(f"{realize_proto}{{")
-    cog.outl("}")
-
 
 
   ]]]*/
