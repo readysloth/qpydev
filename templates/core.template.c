@@ -110,9 +110,6 @@
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
-    def offset_text_by(initiator, text):
-        return len(initiator)*' ' + text
-
     device_name             = SCHEMA["name"]
     class_init_proto        = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
     instance_init_proto     = m.create_device_method_proto(SCHEMA, "void", "init", "Object *obj")
@@ -143,38 +140,18 @@
     cog.outl(f"{instance_init_proto}{{")
 
     init_func_name = SCHEMA["class"]["schema"]["instance_init"]
-    instance_init_source = [l + '\\n' for l in m.get_function_text_from(SCHEMA["class"], init_func_name)]
 
-    py_code_start = f"    static char *py_code = "
-    cog.out(py_code_start + f'"{instance_init_source[0]}"\n')
-    for line in instance_init_source[1:-1]:
-        cog.out(offset_text_by(py_code_start, f'"{line}"\n'))
-    cog.out(offset_text_by(py_code_start, f'"{instance_init_source[-1]}";'))
+    pass_obj_to_python = """
+            PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(Object));
+            if (!p_dev_obj_container) goto err;
 
-    cog.outl()
-    cog.outl(f'    PyObject *p_compiled_code     = Py_CompileString(py_code, "{init_func_name}.py", Py_single_input);')
-    cog.outl( '    if (!p_compiled_code) goto err;')
-    cog.outl()
-    cog.outl(f'    PyObject *p_module            = PyImport_ExecCodeModule("{init_func_name}_module", p_compiled_code);')
-    cog.outl( '    if (!p_module) goto err;')
-    cog.outl()
-    cog.outl(f'    PyObject *p_func              = PyObject_GetAttrString(p_module, "{init_func_name}");')
-    cog.outl( '    if (!p_func) goto err;')
-    cog.outl()
-    cog.outl(f'    PyObject *p_func_args         = PyTuple_New(1);')
-    cog.outl( '    if (!p_func_args) goto err;')
-    cog.outl()
-    cog.outl(f'    PyObject *p_dev_obj_container = PyBytes_FromStringAndSize(obj, sizeof(Object));')
-    cog.outl( '    if (!p_func_args) goto err;')
-    cog.outl()
-    cog.outl(f'    PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);')
-    cog.outl(f'    PyObject *p_ret = PyObject_CallObject(p_func, p_func_args);')
-    cog.outl( '    if (!p_ret) goto err;')
-    cog.outl( '    return;')
-    cog.outl()
-    cog.outl( 'err:')
-    cog.outl( '    PyErr_Print();')
-    cog.outl( '    abort();')
+            PyTuple_SetItem(p_func_args, 0, p_dev_obj_container);
+    """
+    cog.outl(m.get_python_c_api_wrap(SCHEMA,
+                                     'class',
+                                     init_func_name,
+                                     1,
+                                     pass_obj_to_python))
     cog.outl("}")
 
     cog.outl(f"{instance_finalize_proto}{{")

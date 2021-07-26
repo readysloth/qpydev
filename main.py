@@ -6,6 +6,7 @@ import importlib.util
 import subprocess as subp
 
 from pathlib import Path
+from textwrap import dedent
 
 import schema_parser as sp
 
@@ -28,8 +29,43 @@ def get_function_text_from(sub_schema: dict, method_name: str):
     return inspect.getsource(getattr(py_code, method_name)).split('\n')
 
 
-def get_python_prologue(schema: dict):
-    return f'Py_SetProgramName("{schema["name"]}");'
+def get_python_c_api_wrap(schema: dict,
+                          _from: str,
+                          func_name: str,
+                          tuple_size: int,
+                          code_for_insert: str):
+    c_char_source = [l + '\\n' for l in get_function_text_from(schema[_from], func_name)]
+
+    py_code = f"static char *py_code = "
+    py_code_start = len(py_code) + 8
+
+    py_code += f'"{c_char_source[0]}"\n'
+    for line in c_char_source[1:-1]:
+        py_code += py_code_start*' ' + f'"{line}"\n'
+    py_code += py_code_start*' ' + f'"{c_char_source[-1]}";'
+
+    return dedent(f"""
+        {py_code}
+        PyObject *p_compiled_code     = Py_CompileString(py_code, "{func_name}.py", Py_single_input);
+        if (!p_compiled_code) goto err;
+
+        PyObject *p_module            = PyImport_ExecCodeModule("{func_name}_module", p_compiled_code);
+        if (!p_module) goto err;
+
+        PyObject *p_func              = PyObject_GetAttrString(p_module, "{func_name}");
+        if (!p_func) goto err;
+
+        PyObject *p_func_args         = PyTuple_New({tuple_size});
+        if (!p_func_args) goto err;
+        {code_for_insert}
+        PyObject *p_ret = PyObject_CallObject(p_func, p_func_args);
+        if (!p_ret) goto err;
+        return;
+
+    err:
+        PyErr_Print();
+        abort();
+    """)
 
 
 def get_method_name(schema: dict,
