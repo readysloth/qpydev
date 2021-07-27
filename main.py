@@ -33,7 +33,8 @@ def get_python_c_api_wrap(schema: dict,
                           _from: str,
                           func_name: str,
                           tuple_size: int,
-                          code_for_insert: str):
+                          code_for_insert: str,
+                          return_val: str = ''):
     c_char_source = [l + '\\n' for l in get_function_text_from(schema[_from], func_name)]
 
     py_code = f"static char *py_code = "
@@ -78,7 +79,7 @@ def get_python_c_api_wrap(schema: dict,
         Py_XDECREF(p_func);
         Py_XDECREF(p_func_args);
         Py_XDECREF(p_ret);
-        return;
+        return {return_val};
 
     err:
         Py_XDECREF(p_module);
@@ -86,9 +87,9 @@ def get_python_c_api_wrap(schema: dict,
         Py_XDECREF(p_func_args);
         Py_XDECREF(p_ret);
         PyErr_Print();
-        // for post creation code insert
+        // for post creation code  insert
         abort();
-    """)
+        """)
 
 
 def get_method_name(schema: dict,
