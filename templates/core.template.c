@@ -172,13 +172,14 @@
         pass_args_to_python = ''
         for i, (arg, cast) in enumerate(arguments_and_cast):
             is_pointer = '*' in arg[0] + arg[1]
+            arg_val = arg[1].replace('*', '')
             if is_pointer:
-                arg_val = arg[1].replace('*', '')
+                arg_val_as_buf = arg_val
             else:
-                arg_val = '&' + arg[1]
+                arg_val_as_buf= '&' + arg_val
 
             pass_args_to_python += INDENT(INDENT(dedent(f"""
-                                                 PyObject *p_{arg_val} = PyBytes_FromStringAndSize({arg_val}, sizeof({cast}));
+                                                 PyObject *p_{arg_val} = PyBytes_FromStringAndSize({arg_val_as_buf}, sizeof({cast}));
                                                  if (!p_{arg_val}){{
                                                      goto err;
                                                  }}
