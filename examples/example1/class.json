@@ -11,6 +11,13 @@
   },
   "methods" : [
     {
+      "c_name" : "realize",
+      "c_args" : "Object *obj",
+      "c_ret" : "void",
+      "c_to_py_cast" : "TYPE_EXAMPLE_DEVICE",
+      "py_name" : "init_func"
+    },
+    {
       "c_name" : "init",
       "c_args" : "Object *obj",
       "c_ret" : "void",
@@ -22,6 +29,20 @@
       "c_args" : "Object *obj",
       "c_ret" : "void",
       "c_to_py_cast" : "TYPE_EXAMPLE_DEVICE",
+      "py_name" : "finalize_func"
+    },
+    {
+      "c_name" : "read",
+      "c_args" : "void *opaque, hwaddr addr, unsigned size",
+      "c_ret" : "uint64_t",
+      "c_to_py_cast" : "TYPE_EXAMPLE_DEVICE, hwaddr, unsigned",
+      "py_name" : "finalize_func"
+    },
+    {
+      "c_name" : "write",
+      "c_args" : "void *opaque, hwaddr addr, uint64_t data, unsigned size",
+      "c_ret" : "void",
+      "c_to_py_cast" : "TYPE_EXAMPLE_DEVICE, hwaddr, uint64_t, unsigned",
       "py_name" : "finalize_func"
     }
   ]
