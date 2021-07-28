@@ -41,7 +41,7 @@
     cog.outl(INDENT(f"{device_parent}Device parent_obj;"))
     cog.outl(f"}} {device_class};")
     cog.outl()
-    cog.outl(f"typedef struct {{")
+    cog.outl(f"typedef struct __attribute__((packed)) {{")
     for fname, ftype in m.get_nested_schema(SCHEMA, 'device').items():
         cog.outl(INDENT(f"{ftype} {fname};"))
     cog.outl(f"}} {device_instance};")
