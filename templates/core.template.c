@@ -132,7 +132,14 @@
 
     cog.outl(f"{class_init_proto}{{")
 
-    for entry in SCHEMA["class"]["schema"]["init"]["class_field_init"]:
+    class_field_init = SCHEMA["class"]["schema"]["init"]["class_field_init"]
+
+    if not any(filter(lambda cast: cast["dev_cast"]["type"] == "DeviceClass",
+                      class_field_init)):
+        default_dev_cast = {"dev_cast": {"type" : "DeviceClass", "cast": "DEVICE_CLASS"}}
+        class_field_init = [default_dev_cast] + class_field_init
+
+    for entry in class_field_init:
         cog.outl()
         dev_cast   = entry["dev_cast"]
         cast_type  = dev_cast['type']
@@ -147,6 +154,8 @@
 
     for f in filter(lambda m: m["c_name"] in ("reset", "realize", "unrealize"), class_methods):
         cog.outl(INDENT(f"DeviceClass_ptr->{f['c_name']} = {device_name + '_' + f['c_name']};"))
+
+    cog.outl(INDENT(f"device_class_set_props(DeviceClass_ptr, {device_name}_properties);"))
 
     cog.outl()
     cog.outl(INDENT(f'Py_SetProgramName("{device_name}");'))
