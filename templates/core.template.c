@@ -36,14 +36,15 @@
     device_instance    = m.get_device_class_name(SCHEMA)
     device_parent      = SCHEMA["parent"]["name"]
 
-    cog.outl(f"typedef struct {{}} {device_instance};")
 
     cog.outl("typedef struct {")
     cog.outl(INDENT(f"{device_parent}Device parent_obj;"))
+    cog.outl(f"}} {device_class};")
     cog.outl()
+    cog.outl(f"typedef struct {{")
     for fname, ftype in m.get_nested_schema(SCHEMA, 'device').items():
         cog.outl(INDENT(f"{ftype} {fname};"))
-    cog.outl(f"}} {device_class};")
+    cog.outl(f"}} {device_instance};")
   ]]]*/
 /*[[[end]]]*/
 
