@@ -57,16 +57,7 @@ def get_python_c_api_wrap(schema: dict,
                  *p_func_args = NULL,
                  *p_ret = NULL;
 
-        if (!p_compiled_code){{
-            p_compiled_code = Py_CompileString(py_code, "{func_name}.py", Py_single_input);
-        }}
-        {check_code.format(what='p_compiled_code')}
-
-        p_module = PyImport_ExecCodeModule("{func_name}_module", p_compiled_code);
-        {check_code.format(what='p_module')}
-
-        p_func = PyObject_GetAttrString(p_module, "{func_name}");
-        {check_code.format(what='p_func')}
+        PY_COMPILE_AND_GET_FUNC("{func_name}")
 
         p_func_args = PyTuple_New({tuple_size});
         {check_code.format(what='p_func_args')}
@@ -75,17 +66,11 @@ def get_python_c_api_wrap(schema: dict,
         {check_code.format(what='p_ret')}
 
         // for post creation code insert
-        Py_XDECREF(p_module);
-        Py_XDECREF(p_func);
-        Py_XDECREF(p_func_args);
-        Py_XDECREF(p_ret);
+        PY_CLEAN_VARIABLES()
         return {return_val};
 
     err:
-        Py_XDECREF(p_module);
-        Py_XDECREF(p_func);
-        Py_XDECREF(p_func_args);
-        Py_XDECREF(p_ret);
+        PY_CLEAN_VARIABLES()
         PyErr_Print();
         // for post creation code  insert
         abort();

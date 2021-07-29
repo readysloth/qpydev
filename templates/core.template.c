@@ -18,6 +18,32 @@
 #include <Python.h>
 
 
+#define PY_COMPILE_AND_GET_FUNC(FUNC_NAME) \
+    if (!p_compiled_code){ \
+        p_compiled_code = Py_CompileString(py_code, FUNC_NAME ".py", Py_single_input); \
+    } \
+    if (!p_compiled_code){ \
+        goto err; \
+    } \
+    \
+    p_module = PyImport_ExecCodeModule(FUNC_NAME "module", p_compiled_code); \
+    if (!p_module){ \
+        goto err; \
+    } \
+    \
+    p_func = PyObject_GetAttrString(p_module, FUNC_NAME); \
+    if (!p_func){ \
+        goto err; \
+    }
+
+
+#define PY_CLEAN_VARIABLES() \
+    Py_XDECREF(p_module); \
+    Py_XDECREF(p_func); \
+    Py_XDECREF(p_func_args); \
+    Py_XDECREF(p_ret);
+
+
 /*[[[cog
     #
     # generating device class
