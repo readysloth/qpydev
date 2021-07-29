@@ -63,10 +63,16 @@
     device_instance    = m.get_device_class_name(SCHEMA)
     device_name        = SCHEMA["name"]
     device_parent_type = SCHEMA["parent"]["type"]
+    device_interface   = SCHEMA["parent"]["interface"]
     device_qtype       = SCHEMA["name"].upper()
 
     cog.outl(f'#define TYPE_{device_qtype} "{device_name}"')
-    cog.outl(f"OBJECT_DEFINE_TYPE({device_instance}, {device_name}, {device_qtype}, {device_parent_type}_DEVICE)")
+    cog.outl(f"""OBJECT_DEFINE_TYPE_WITH_INTERFACES({device_instance},
+                                       {device_name},
+                                       {device_qtype},
+                                       {device_parent_type}_DEVICE,
+                                       {{ INTERFACE_{device_interface} }},
+                                       {{ NULL }})""")
   ]]]*/
 /*[[[end]]]*/
 
