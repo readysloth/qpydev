@@ -221,7 +221,9 @@
                 arg_val_as_buf= '&' + arg_val
 
             pass_args_to_python += INDENT(INDENT(dedent(f"""
-                                                 PyObject *p_{arg_val} = PyBytes_FromStringAndSize({arg_val_as_buf}, sizeof({cast}));
+                                                 PyObject *p_{arg_val} = PyMemoryView_FromMemory((char*){arg_val_as_buf},
+                                                                                                 sizeof({cast}),
+                                                                                                 PyBUF_WRITE);
                                                  if (!p_{arg_val}){{
                                                      goto err;
                                                  }}
