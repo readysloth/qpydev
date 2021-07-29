@@ -1,6 +1,10 @@
 {
   "device": {
+    "can_be_ommited_field_io": "MemoryRegionOps",
     "field_name": "type",
     "field_name1": "type1"
+  }
+  "io" : {
+    "endiannes" : "DEVICE_NATIVE_ENDIAN"
   }
 }

@@ -55,9 +55,9 @@
         SCHEMA = j.load(sf)
 
 
-    device_class       = m.get_device_class_name(SCHEMA, full = True)
-    device_instance    = m.get_device_class_name(SCHEMA)
-    device_parent      = SCHEMA["parent"]["name"]
+    device_class    = m.get_device_class_name(SCHEMA, full = True)
+    device_instance = m.get_device_class_name(SCHEMA)
+    device_parent   = SCHEMA["parent"]["name"]
 
 
     cog.outl("typedef struct {")
@@ -65,7 +65,7 @@
     cog.outl(f"}} {device_class};")
     cog.outl()
     cog.outl(f"typedef struct __attribute__((packed)) {{")
-    for fname, ftype in m.get_nested_schema(SCHEMA, 'device').items():
+    for fname, ftype in m.get_nested_schema(SCHEMA, "device").items():
         cog.outl(INDENT(f"{ftype} {fname};"))
     cog.outl(f"}} {device_instance};")
   ]]]*/
@@ -132,6 +132,33 @@
   ]]]*/
 /*[[[end]]]*/
 
+/*[[[cog
+    #
+    # generating device MemoryRegionOps
+    #
+
+    import json as j
+    import main as m
+    from textwrap import indent, dedent
+    INDENT = lambda s: indent(s, ' '*4)
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    device_name = SCHEMA['name']
+
+    for k,v in m.get_nested_schema(SCHEMA, "device").items():
+        if v == "MemoryRegionOps":
+            cog.outl(f"static const MemoryRegionOps {device_name}_mem_ops = {{")
+            for mem_k, mem_v in SCHEMA["device"]["schema"][k].items():
+                cog.outl(INDENT(f".{mem_k} = {mem_v},"))
+
+            cog.outl(INDENT(f".read = {m.get_method_name(SCHEMA, 'read')},"))
+            cog.outl(INDENT(f".write = {m.get_method_name(SCHEMA, 'write')},"))
+
+            cog.outl("};")
+  ]]]*/
+/*[[[end]]]*/
 
 /*[[[cog
     #
