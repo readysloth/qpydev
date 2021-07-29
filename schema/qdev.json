@@ -4,6 +4,7 @@
   "parent" : {
     "name" : "SysBus",
     "type" : "SYS_BUS",
+    "interface" : "",
     "header" : "hw/sysbus.h"
   },
   "class" : {

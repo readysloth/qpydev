@@ -2,9 +2,10 @@
   "name" : "example_device",
   "python_version" : "3.7m",
   "parent" : {
-    "name" : "SysBus",
-    "type" : "SYS_BUS",
-    "header" : "hw/sysbus.h"
+    "name" : "PCI",
+    "type" : "PCI",
+    "interface" : "CONVENTIONAL_PCI_DEVICE",
+    "header" : "hw/pci/pci.h"
   },
   "class" : {
     "schema" : "class.json",
