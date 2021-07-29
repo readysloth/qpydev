@@ -17,24 +17,21 @@
 
 #include <Python.h>
 
+#define IF_NULL_GOTO_ERR(VAR, BODY) \
+    BODY; \
+    if (!VAR){ \
+        goto err; \
+    }
 
 #define PY_COMPILE_AND_GET_FUNC(FUNC_NAME) \
     if (!p_compiled_code){ \
-        p_compiled_code = Py_CompileString(py_code, FUNC_NAME ".py", Py_single_input); \
+        IF_NULL_GOTO_ERR(p_compiled_code, \
+                         p_compiled_code = Py_CompileString(py_code, FUNC_NAME ".py", Py_single_input)) \
     } \
-    if (!p_compiled_code){ \
-        goto err; \
-    } \
-    \
-    p_module = PyImport_ExecCodeModule(FUNC_NAME "module", p_compiled_code); \
-    if (!p_module){ \
-        goto err; \
-    } \
-    \
-    p_func = PyObject_GetAttrString(p_module, FUNC_NAME); \
-    if (!p_func){ \
-        goto err; \
-    }
+    IF_NULL_GOTO_ERR(p_module, \
+                     p_module = PyImport_ExecCodeModule(FUNC_NAME "module", p_compiled_code)) \
+    IF_NULL_GOTO_ERR(p_func, \
+                     p_func = PyObject_GetAttrString(p_module, FUNC_NAME))
 
 
 #define PY_CLEAN_VARIABLES() \
