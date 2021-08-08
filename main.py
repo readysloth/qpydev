@@ -57,7 +57,11 @@ def get_python_c_api_wrap(schema: dict,
                  *p_func_args = NULL,
                  *p_ret = NULL;
 
-        PY_COMPILE_AND_GET_FUNC("{func_name}")
+        PY_COMPILE_AND_GET_FUNC("{func_name}",
+                                py_code,
+                                p_compiled_code,
+                                p_module,
+                                p_func);
 
         p_func_args = PyTuple_New({tuple_size});
         {check_code.format(what='p_func_args')}
@@ -66,13 +70,19 @@ def get_python_c_api_wrap(schema: dict,
         {check_code.format(what='p_ret')}
 
         // for post creation code insert
-        PY_CLEAN_VARIABLES()
+        Py_XDECREF(p_module);
+        Py_XDECREF(p_func);
+        Py_XDECREF(p_func_args);
+        Py_XDECREF(p_ret);
         return {return_val};
 
     err:
-        PY_CLEAN_VARIABLES()
         PyErr_Print();
-        // for post creation code  insert
+        // for post creation code insert
+        Py_XDECREF(p_module);
+        Py_XDECREF(p_func);
+        Py_XDECREF(p_func_args);
+        Py_XDECREF(p_ret);
         abort();
         """)
 

@@ -5,6 +5,6 @@
     "field_name1": "type1"
   }
   "io" : {
-    "endiannes" : "DEVICE_NATIVE_ENDIAN"
+    "endianness" : "DEVICE_NATIVE_ENDIAN"
   }
 }

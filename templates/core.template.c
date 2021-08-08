@@ -23,22 +23,15 @@
         goto err; \
     }
 
-#define PY_COMPILE_AND_GET_FUNC(FUNC_NAME) \
-    if (!p_compiled_code){ \
-        IF_NULL_GOTO_ERR(p_compiled_code, \
-                         p_compiled_code = Py_CompileString(py_code, FUNC_NAME ".py", Py_single_input)) \
+#define PY_COMPILE_AND_GET_FUNC(FUNC_NAME, PY_CODE, PY_COMPILED, PY_MODULE, PY_FUNC) \
+    if (!PY_COMPILED){ \
+        IF_NULL_GOTO_ERR(PY_COMPILED, \
+                         PY_COMPILED = Py_CompileString(PY_CODE, FUNC_NAME ".py", Py_single_input)) \
     } \
-    IF_NULL_GOTO_ERR(p_module, \
-                     p_module = PyImport_ExecCodeModule(FUNC_NAME "module", p_compiled_code)) \
-    IF_NULL_GOTO_ERR(p_func, \
-                     p_func = PyObject_GetAttrString(p_module, FUNC_NAME))
-
-
-#define PY_CLEAN_VARIABLES() \
-    Py_XDECREF(p_module); \
-    Py_XDECREF(p_func); \
-    Py_XDECREF(p_func_args); \
-    Py_XDECREF(p_ret);
+    IF_NULL_GOTO_ERR(PY_MODULE, \
+                     PY_MODULE = PyImport_ExecCodeModule(FUNC_NAME "module", PY_COMPILED)) \
+    IF_NULL_GOTO_ERR(PY_FUNC, \
+                     PY_FUNC = PyObject_GetAttrString(PY_MODULE, FUNC_NAME))
 
 
 /*[[[cog
@@ -129,34 +122,6 @@
         cog.outl(INDENT(f"DEFINE_PROP_{ptype}({pname}, {dev_name}, {pfield}{default_value}),"))
     cog.outl(INDENT("DEFINE_PROP_END_OF_LIST()"))
     cog.outl("};")
-  ]]]*/
-/*[[[end]]]*/
-
-/*[[[cog
-    #
-    # generating device MemoryRegionOps
-    #
-
-    import json as j
-    import main as m
-    from textwrap import indent, dedent
-    INDENT = lambda s: indent(s, ' '*4)
-
-    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
-        SCHEMA = j.load(sf)
-
-    device_name = SCHEMA['name']
-
-    for k,v in m.get_nested_schema(SCHEMA, "device").items():
-        if v == "MemoryRegionOps":
-            cog.outl(f"static const MemoryRegionOps {device_name}_mem_ops = {{")
-            for mem_k, mem_v in SCHEMA["device"]["schema"][k].items():
-                cog.outl(INDENT(f".{mem_k} = {mem_v},"))
-
-            cog.outl(INDENT(f".read = {m.get_method_name(SCHEMA, 'read')},"))
-            cog.outl(INDENT(f".write = {m.get_method_name(SCHEMA, 'write')},"))
-
-            cog.outl("};")
   ]]]*/
 /*[[[end]]]*/
 
@@ -285,5 +250,33 @@
         cog.outl("}")
         cog.outl()
         cog.outl()
+  ]]]*/
+/*[[[end]]]*/
+
+/*[[[cog
+    #
+    # generating device MemoryRegionOps
+    #
+
+    import json as j
+    import main as m
+    from textwrap import indent, dedent
+    INDENT = lambda s: indent(s, ' '*4)
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    device_name = SCHEMA['name']
+
+    for k,v in m.get_nested_schema(SCHEMA, "device").items():
+        if v == "MemoryRegionOps":
+            cog.outl(f"static const MemoryRegionOps {device_name}_mem_ops = {{")
+            for mem_k, mem_v in SCHEMA["device"]["schema"][k].items():
+                cog.outl(INDENT(f".{mem_k} = {mem_v},"))
+
+            cog.outl(INDENT(f".read = {m.get_method_name(SCHEMA, 'read')},"))
+            cog.outl(INDENT(f".write = {m.get_method_name(SCHEMA, 'write')},"))
+
+            cog.outl("};")
   ]]]*/
 /*[[[end]]]*/
