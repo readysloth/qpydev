@@ -210,13 +210,14 @@
                 arg_val_as_buf= '&' + arg_val
 
             pass_args_to_python += INDENT(INDENT(dedent(f"""
-                                                 PyObject *p_{arg_val} = PyMemoryView_FromMemory((char*){arg_val_as_buf},
-                                                                                                 sizeof({cast}),
-                                                                                                 PyBUF_WRITE);
-                                                 if (!p_{arg_val}){{
+                                                 PyObject *p_mem_view_{arg_val} = PyMemoryView_FromMemory((char*){arg_val_as_buf},
+                                                                                                 {' ' * len(arg_val)}sizeof({cast}),
+                                                                                                 {' ' * len(arg_val)}PyBUF_WRITE);
+                                                 if (!p_mem_view_{arg_val}){{
                                                      goto err;
                                                  }}
-                                                 PyTuple_SetItem(p_func_args, {i}, p_{arg_val});""")))
+                                                 PyTuple_SetItem(p_func_args, {i}, p_mem_view_{arg_val});
+                                                 """)))
 
             py_return_code = ''
             py_return_val_name = ''
