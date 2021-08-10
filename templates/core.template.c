@@ -92,6 +92,27 @@
   ]]]*/
 /*[[[end]]]*/
 
+/*[[[cog
+    #
+    # generating function prototypes
+    #
+
+    import json as j
+    import main as m
+    from textwrap import indent, dedent
+    INDENT = lambda s: indent(s, ' '*4)
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    class_methods = SCHEMA["class"]["schema"]["methods"]
+    class_init = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
+    cog.outl(f"{class_init};")
+
+    for method in class_methods:
+        cog.outl(f'{m.create_device_method_proto(SCHEMA, method["c_ret"], method["c_name"], method["c_args"])};')
+  ]]]*/
+/*[[[end]]]*/
 
 /*[[[cog
     #
@@ -127,6 +148,34 @@
 
 /*[[[cog
     #
+    # generating device MemoryRegionOps
+    #
+
+    import json as j
+    import main as m
+    from textwrap import indent, dedent
+    INDENT = lambda s: indent(s, ' '*4)
+
+    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
+        SCHEMA = j.load(sf)
+
+    device_name = SCHEMA['name']
+
+    for k,v in m.get_nested_schema(SCHEMA, "device").items():
+        if v == "MemoryRegionOps":
+            cog.outl(f"static const MemoryRegionOps {device_name}_mem_ops = {{")
+            for mem_k, mem_v in SCHEMA["device"]["schema"][k].items():
+                cog.outl(INDENT(f".{mem_k} = {mem_v},"))
+
+            cog.outl(INDENT(f".read = {m.get_method_name(SCHEMA, 'read')},"))
+            cog.outl(INDENT(f".write = {m.get_method_name(SCHEMA, 'write')},"))
+
+            cog.outl("};")
+  ]]]*/
+/*[[[end]]]*/
+
+/*[[[cog
+    #
     # generating device and instance methods
     #
 
@@ -136,21 +185,14 @@
 
     from textwrap import indent, dedent
     INDENT = lambda s: indent(s, ' '*4)
+    ALIGN_INDENT_BY = lambda s: ' ' * len(s)
 
     with open(m.DEV_SCHEMA_FILE, 'r') as sf:
         SCHEMA = j.load(sf)
 
 
-    device_name             = SCHEMA["name"]
-    class_methods           = SCHEMA["class"]["schema"]["methods"]
-    class_init_proto        = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
-
-    cog.outl(f"{class_init_proto};")
-    for method in class_methods:
-        cog.outl(f'{m.create_device_method_proto(SCHEMA, method["c_ret"], method["c_name"], method["c_args"])};')
-    cog.outl()
-    cog.outl()
-
+    device_name      = SCHEMA["name"]
+    class_init_proto = m.create_device_method_proto(SCHEMA, "void", "class_init", "ObjectClass *oc, void *data")
 
     cog.outl(f"{class_init_proto}{{")
 
@@ -174,8 +216,6 @@
                 continue
             cog.outl(INDENT(f"{cast_type}_ptr->{k} = {v};"))
 
-    for f in filter(lambda m: m["c_name"] in ("reset", "realize", "unrealize"), class_methods):
-        cog.outl(INDENT(f"DeviceClass_ptr->{f['c_name']} = {device_name + '_' + f['c_name']};"))
 
     cog.outl(INDENT(f"device_class_set_props(DeviceClass_ptr, {device_name}_properties);"))
 
@@ -209,10 +249,22 @@
             else:
                 arg_val_as_buf= '&' + arg_val
 
+            if method["c_name"] == "realize" and \
+               "MemoryRegionOps" in m.get_nested_schema(SCHEMA, "device").values():
+                device_fields = m.get_nested_schema(SCHEMA, "device")
+                reverse_device_fields = dict(zip(device_fields.values(), device_fields.keys()))
+                mem_io_field = reverse_device_fields["MemoryRegionOps"]
+                cog.outl(INDENT(f"memory_region_init_io(&(({cast}*){arg_val_as_buf})->{mem_io_field},"))
+                cog.outl(INDENT(f"                      OBJECT({arg_val_as_buf}),"))
+                cog.outl(INDENT(f"                      &{device_name}_mem_ops,"))
+                cog.outl(INDENT(f"                      {arg_val_as_buf},"))
+                cog.outl(INDENT(f'                      "{device_name}-mmio",'))
+                cog.outl(INDENT(f"                      1);"))
+
             pass_args_to_python += INDENT(INDENT(dedent(f"""
                                                  PyObject *p_mem_view_{arg_val} = PyMemoryView_FromMemory((char*){arg_val_as_buf},
-                                                                                                 {' ' * len(arg_val)}sizeof({cast}),
-                                                                                                 {' ' * len(arg_val)}PyBUF_WRITE);
+                                                                                                 {ALIGN_INDENT_BY(arg_val)}sizeof({cast}),
+                                                                                                 {ALIGN_INDENT_BY(arg_val)}PyBUF_WRITE);
                                                  if (!p_mem_view_{arg_val}){{
                                                      goto err;
                                                  }}
@@ -251,33 +303,5 @@
         cog.outl("}")
         cog.outl()
         cog.outl()
-  ]]]*/
-/*[[[end]]]*/
-
-/*[[[cog
-    #
-    # generating device MemoryRegionOps
-    #
-
-    import json as j
-    import main as m
-    from textwrap import indent, dedent
-    INDENT = lambda s: indent(s, ' '*4)
-
-    with open(m.DEV_SCHEMA_FILE, 'r') as sf:
-        SCHEMA = j.load(sf)
-
-    device_name = SCHEMA['name']
-
-    for k,v in m.get_nested_schema(SCHEMA, "device").items():
-        if v == "MemoryRegionOps":
-            cog.outl(f"static const MemoryRegionOps {device_name}_mem_ops = {{")
-            for mem_k, mem_v in SCHEMA["device"]["schema"][k].items():
-                cog.outl(INDENT(f".{mem_k} = {mem_v},"))
-
-            cog.outl(INDENT(f".read = {m.get_method_name(SCHEMA, 'read')},"))
-            cog.outl(INDENT(f".write = {m.get_method_name(SCHEMA, 'write')},"))
-
-            cog.outl("};")
   ]]]*/
 /*[[[end]]]*/
