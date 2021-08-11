@@ -1,6 +1,10 @@
 {
   "device": {
-    "dummy_field": "int",
-    "another_dummy_field": "float"
+    "io": "MemoryRegionOps",
+    "another_dummy_field": "float",
+    "dummy_field[4000]": "char"
+  },
+  "io" : {
+    "endianness" : "DEVICE_NATIVE_ENDIAN"
   }
 }
