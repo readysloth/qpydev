@@ -18,5 +18,8 @@ language and specifying things like:
 in json files that are called "device schema"
 
 For now it's up to you to integrate in qemu your generated device, but
-autointegration is in plans
+autointegration is in plans.
+
+You can read [HOWTO.md](HOWTO.md) or look at [examples](examples) to understand,
+how create your own python-driven device.
 
