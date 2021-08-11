@@ -34,6 +34,12 @@
                      PY_FUNC = PyObject_GetAttrString(PY_MODULE, FUNC_NAME))
 
 
+typedef struct {
+    char *name;
+    size_t size;
+} DeviceFieldMetaInfo;
+
+
 /*[[[cog
     #
     # generating device class
@@ -61,9 +67,36 @@
     for fname, ftype in m.get_nested_schema(SCHEMA, "device").items():
         cog.outl(INDENT(f"{ftype} {fname};"))
     cog.outl(f"}} {device_instance};")
+
+    cog.outl()
+    cog.outl()
+    cog.outl(f"DeviceFieldMetaInfo device_fields[] = {{")
+    for fname, ftype in m.get_nested_schema(SCHEMA, "device").items():
+        cog.outl(INDENT(f'{{ "{fname}", sizeof({ftype}) }},'))
+    cog.outl(INDENT('};'))
   ]]]*/
 /*[[[end]]]*/
 
+#define DEVICE_FIELDS_COUNT sizeof(device_fields)/sizeof(device_fields[0])
+
+static PyObject* create_dict_for_class_fields(){
+    PyObject* p_field_dicts[DEVICE_FIELDS_COUNT];
+    PyObject *p_meta_info_aggregation = PyDict_New();
+    for(int i = 0; i < DEVICE_FIELDS_COUNT; i++){
+        int err = PyDict_Merge(p_meta_info_aggregation,
+                               Py_BuildValue("{s:i}",
+                                             device_fields[i].name,
+                                             device_fields[i].size),
+                               1);
+        if(err){
+            PyErr_Print();
+            abort();
+        }
+    }
+    return p_meta_info_aggregation;
+}
+
+PyObject *DictWithClassFields;
 
 /*[[[cog
     #
@@ -222,6 +255,7 @@
     cog.outl()
     cog.outl(INDENT(f'Py_SetProgramName("{device_name}");'))
     cog.outl(INDENT(f'Py_Initialize();'))
+    cog.outl(INDENT(f'DictWithClassFields = create_dict_for_class_fields();'))
     cog.outl("}")
     cog.outl()
     cog.outl()
@@ -282,10 +316,11 @@
                                         {py_return_val_name} = *({method["c_ret"]}*)py_out_buf;
                                         """))
 
+        pass_args_to_python += INDENT(INDENT(f"PyTuple_SetItem(p_func_args, {argc}, DictWithClassFields);\n"))
         c_function_body = m.get_python_c_api_wrap(SCHEMA,
                                                   'class',
                                                   method["py_name"],
-                                                  argc,
+                                                  argc + 1,
                                                   pass_args_to_python,
                                                   return_val=py_return_val_name)
         if method["c_name"] == "finalize":
