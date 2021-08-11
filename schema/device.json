@@ -4,7 +4,7 @@
     "field_name": "type",
     "field_name1": "type1"
   }
-  "io" : {
+  "can_be_ommited_field_io" : {
     "endianness" : "DEVICE_NATIVE_ENDIAN"
   }
 }
