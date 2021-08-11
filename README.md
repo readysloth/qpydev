@@ -2,9 +2,8 @@
 
 ## What it is?
 
-Qpydev is python program that consumes json description of your
-qemu device and creates c source file that can be integrated in qemu.
-
+Qpydev is python program that consumes json description and python scripts
+with logic of your qemu device and creates c source file that can be integrated in qemu.
 
 ## How it works?
 
