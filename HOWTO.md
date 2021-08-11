@@ -1,4 +1,4 @@
-# How to qpydev
+# How to Qpydev
 
 If you plan to create simple qemu device and don't want to alter generated source file,
 then your main point of interest should be [schema](schema) folder, files in which describe
@@ -62,3 +62,15 @@ This file should contain:
 
 If something is not clear, you can always go to [schema](schema) folder or [examples](examples) to see
 how things are done
+
+
+## Code
+
+Main logic supposed to reside in python source files that are embedded directly into device source.
+Qpydev always pass to python all arguments function recieves and device object fields meta-information
+(`{'field name' : size_of_field_in_bytes}`) as last argument.
+C arguments are transformed to modifiable `memoryview` objects, so (at least for now) it's up to python
+code to map and change that bytes to something useful.
+
+If C function returns something, so must python code. In generated code it will be parsed as bytes and
+casted to needed type.
