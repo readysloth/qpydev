@@ -275,6 +275,7 @@ PyObject *DictWithClassFields;
         cog.outl(f"{method_proto}{{")
 
         pass_args_to_python = ''
+        memoryview_vars = []
         for i, (arg, cast) in enumerate(arguments_and_cast):
             is_pointer = '*' in arg[0] + arg[1]
             arg_val = arg[1].replace('*', '')
@@ -295,6 +296,7 @@ PyObject *DictWithClassFields;
                 cog.outl(INDENT(f'                      "{device_name}-mmio",'))
                 cog.outl(INDENT(f"                      1);"))
 
+            memoryview_vars.append(f"p_mem_view_{arg_val}")
             pass_args_to_python += INDENT(INDENT(dedent(f"""
                                                  PyObject *p_mem_view_{arg_val} = PyMemoryView_FromMemory((char*){arg_val_as_buf},
                                                                                                  {ALIGN_INDENT_BY(arg_val)}sizeof({cast}),
@@ -305,6 +307,7 @@ PyObject *DictWithClassFields;
                                                  PyTuple_SetItem(p_func_args, {i}, p_mem_view_{arg_val});
                                                  """)))
 
+            memoryview_vars_free = INDENT('\n'.join([f'Py_XDECREF({mv});' for mv in memoryview_vars]))
             py_return_code = ''
             py_return_val_name = ''
             if method["c_ret"] != "void":
@@ -324,14 +327,16 @@ PyObject *DictWithClassFields;
                                                   pass_args_to_python,
                                                   return_val=py_return_val_name)
         if method["c_name"] == "finalize":
+            err_handling_code = "if(Py_FinalizeEx()){\n" \
+                                + INDENT(INDENT("PyErr_Print();\n")) \
+                                + INDENT(INDENT("abort();\n")) \
+                                + INDENT("}\n")
             c_function_body = re.sub("//.*?\n",
-                                     "if(Py_FinalizeEx()){\n"
-                                     + ' '*8 + "PyErr_Print();\n"
-                                     + ' '*8 + "abort();\n"
-                                     + ' '*4 + "}\n",
+                                     err_handling_code + memoryview_vars_free + '\n',
                                      c_function_body)
         else:
-            c_function_body = re.sub("//.*?\n", py_return_code + '\n', c_function_body, count=1)
+            c_function_body = re.sub("\s+//.*?\n", f"\n{py_return_code}\n{memoryview_vars_free}\n", c_function_body, count=1)
+            c_function_body = re.sub("\s+//.*?\n", f"\n{memoryview_vars_free}\n", c_function_body, count=1)
         c_function_body = '\n'.join(filter(lambda l: not re.match("\s+$", l), c_function_body.splitlines()))
         cog.outl(c_function_body)
 
