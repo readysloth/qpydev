@@ -263,8 +263,8 @@ PyObject *DictWithClassFields;
     for method in class_methods:
         method_proto = m.create_device_method_proto(SCHEMA, method["c_ret"], method["c_name"], method["c_args"])
         argc = method["c_args"].count(',') + 1
-        arguments = method["c_args"].split(',')
-        casts = method["c_to_py_cast"].split(',')
+        arguments = [s.strip() for s in method["c_args"].split(',')]
+        casts = [s.strip() for s in method["c_to_py_cast"].split(',')]
 
         argument_type_val = [arg.split() for arg in arguments]
         arguments_and_cast = list(zip(argument_type_val, casts))
